@@ -11,6 +11,8 @@
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+.idea/**
+target/**
 
 # AWS User-specific
 .idea/**/aws.xml
@@ -140,5 +142,4 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/intellij,windows.com/developers/gitignore/api/java,intellij
-/ingsw2022-AM12.iml
+# End of https://www.toptal.com/developers/gitignore/api/intellij,windows
