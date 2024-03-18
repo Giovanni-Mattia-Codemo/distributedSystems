@@ -24,13 +24,15 @@ public class Room{
         different vector clocks in the case messages are sent from different clients
         at the same moment (no order can be inferred)
      */
-    public void computeVectorClock(Message msg){
+    public boolean computeVectorClock(Message msg){
         String sender = msg.getSender();
         VectorClock newClock = msg.getVectorClock();
 
-        //Ignore if the message is an old message
+        /* Ignore if the message is an old message
+           This works cuz the client resending the lost messages is always the same
+         */
         if(newClock.getClock().get(sender) <= roomsClock.getClock().get(sender)){
-            return;
+            return false;
         }
 
         //Check whether the message has already been saved
@@ -43,11 +45,12 @@ public class Room{
                     if(newClock.getClock().get(p)<=roomsClock.getClock().get(p)){
                         addMessage(msg);
                         removeFromBuffer(msg);
-                        checkMessages();
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 
     public void removeFromBuffer(Message message){
@@ -74,8 +77,8 @@ public class Room{
     //there's an issue if messages are eliminated
     public void checkMessages(){
         for (Message msg : bufferedMessages) {
-            computeVectorClock(msg);
-            break; //does it solve the problem?
+            if(computeVectorClock(msg))
+                break;
         }
     }
 
@@ -88,6 +91,7 @@ public class Room{
         Calendar calendar = Calendar.getInstance();
         String formattedTime = sdf.format(calendar.getTime());
         System.out.println("[" + formattedTime + "] [" + msg.getSender() + "]: " + msg.getContent());
+        checkMessages();
     }
 
     public List<Message> getRoomMessages() {

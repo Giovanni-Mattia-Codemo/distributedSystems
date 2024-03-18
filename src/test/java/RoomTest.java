@@ -29,7 +29,7 @@ public class RoomTest {
         map.put("Fede", 1);
         VectorClock clock1 = new VectorClock(map1);
 
-        Message msg1 = new Message("Message","Fede","Lo so",users, clock1, "Boh");
+        Message msg1 = new Message("Message","Gio","Lo so",users, clock1, "Boh");
 
         room.insertMessage(msg);
         room.insertMessage(msg1);
