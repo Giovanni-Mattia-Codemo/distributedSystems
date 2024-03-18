@@ -20,15 +20,23 @@ class Room{
         this.bufferedMessages = new ArrayList<>();
     }
 
+    /*  now the hard part is decide how to recover lost messages since we can have
+        different vector clocks in the case messages are sent from different clients
+        at the same moment (no order can be inferred)
+     */
     public void computeVectorClock(Message msg){
-        //Check whether the message has already been sent
-        if(isAbsent(msg.getVectorClock())){
-            bufferedMessages.add(msg);
-        }
-
         String sender = msg.getSender();
         VectorClock newClock = msg.getVectorClock();
 
+        //Ignore if the message is an old message
+        if(newClock.getClock().get(sender) <= roomsClock.getClock().get(sender)){
+            return;
+        }
+
+        //Check whether the message has already been saved
+        if(isAbsent(msg.getContent())){
+            bufferedMessages.add(msg);
+        }
         if(newClock.getClock().get(sender) == roomsClock.getClock().get(sender)+1){
             for(String p : participants){
                 if(!Objects.equals(p, sender)){
@@ -43,25 +51,24 @@ class Room{
     }
 
     public void removeFromBuffer(Message message){
+        //simplified check on content since each vector clock could be different
         for(int i=0; i<bufferedMessages.size();i++){
             Message msg = bufferedMessages.get(i);
-            for(String user : participants){
-                if(Objects.equals(msg.getVectorClock().getClock().get(user), message.getVectorClock().getClock().get(user))){
-                    bufferedMessages.remove(msg);
-                }
+            if(message.getContent().equals(msg.getContent())){
+                bufferedMessages.remove(msg);
+                break;
             }
         }
     }
 
-    public boolean isAbsent(VectorClock message){
+    public boolean isAbsent(String message){
+        //simplified check on content since each vector clock could be different
         for(Message msg : bufferedMessages){
-            for(String user : participants){
-                if(!Objects.equals(msg.getVectorClock().getClock().get(user), message.getClock().get(user))){
-                    return true;
-                }
+            if(msg.getContent().equals(message)){
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     public void checkMessages(){
