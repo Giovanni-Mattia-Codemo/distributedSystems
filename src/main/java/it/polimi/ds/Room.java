@@ -3,7 +3,7 @@ package it.polimi.ds;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-class Room{
+public class Room{
     private final List<String> participants;
     private VectorClock roomsClock;
     private final List<Message> roomMessages;
@@ -71,9 +71,11 @@ class Room{
         return true;
     }
 
+    //there's an issue if messages are eliminated
     public void checkMessages(){
         for (Message msg : bufferedMessages) {
             computeVectorClock(msg);
+            break; //does it solve the problem?
         }
     }
 
@@ -109,6 +111,10 @@ class Room{
             index++;
         }
         return -1;
+    }
+
+    public void insertMessage(Message msg){
+        bufferedMessages.add(msg);
     }
 }
 

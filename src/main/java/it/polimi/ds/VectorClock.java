@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-class VectorClock implements Serializable {
+public class VectorClock implements Serializable {
     private static final long serialVersionUID = 1L;
     private final Map<String, Integer> clock;
 
