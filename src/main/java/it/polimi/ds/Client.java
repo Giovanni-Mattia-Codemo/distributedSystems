@@ -28,16 +28,18 @@ public class Client {
     }
 
     public void deleteRoom(String room){
-        rooms.remove(room);
-        createMessage(room, "Deletion", room);
-        System.out.println("Room '" + room + "' has been deleted.\n");
+        if(rooms.containsKey(room)) {
+            createMessage(room, "Deletion", room);
+            rooms.remove(room);
+        }
+        else System.out.println("You cannot delete a room you are not a participant of.");
     }
 
     public void createRoom(String roomName, List<String> participants){
         rooms.put(roomName, new Room(participants));
         Message msg = new Message("Room", this.username, roomName, participants, null, roomName);
         sendMessage(msg);
-        System.out.println("Room '" + roomName + "' has been created.");
+        System.out.println("> Room '" + roomName + "' has been created.");
     }
 
     public void createMessage(String room, String type, String content){
@@ -86,7 +88,7 @@ public class Client {
                             case "Room":
                                 if (!rooms.containsKey(msg.getContent())) {
                                     rooms.put(msg.getContent(), new Room(msg.getParticipants()));
-                                    System.out.println("You have been added to room " + msg.getContent() + "\n");
+                                    System.out.print("You have been added to room " + msg.getContent() + "\n> ");
                                 }
                                 break;
                             case "Message":
@@ -95,7 +97,7 @@ public class Client {
                                 break;
                             case "Deletion":
                                 rooms.remove(msg.getContent());
-                                System.out.println("Room \"" + msg.getContent() + "\" has been deleted.\n");
+                                System.out.print("Room \"" + msg.getContent() + "\" has been deleted.\n> ");
                                 break;
                             default:
                                 break;
