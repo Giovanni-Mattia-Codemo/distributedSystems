@@ -42,16 +42,18 @@ public class Client {
         System.out.println("> Room '" + roomName + "' has been created.");
     }
 
-    public void createMessage(String room, String type, String content){
+    public Message createMessage(String room, String type, String content) {
         List<String> participants = rooms.get(room).getParticipants();
 
         //Implement vector clock
-        VectorClock vectorClock = rooms.get(room).getRoomsClock();
+        VectorClock vectorClock = rooms.get(room).getRoomClock();
         vectorClock.increment(this.username);
         //End vector clock computation
 
         Message msg = new Message(type, this.username, content, participants, vectorClock, room);
         sendMessage(msg);
+
+        return msg;
     }
 
     public void sendMessage(Message message){
@@ -150,13 +152,15 @@ public class Client {
         Thread receiverThread = new Thread(clientHandler);
         receiverThread.start();
 
-        // Start a thread to receive messages
         Thread receiver = new Thread(() -> {
             while (!client.clientSocket.isClosed()) {
                 client.receiveMessage();
             }
         });
         receiver.start();
+    }
 
+    public MulticastSocket getClientSocket() {
+        return clientSocket;
     }
 }

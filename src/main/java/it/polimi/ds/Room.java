@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Room{
     private final List<String> participants;
-    private VectorClock roomsClock;
+    private VectorClock roomClock;
     private final List<Message> roomMessages;
     private final List<Message> bufferedMessages;
 
@@ -16,7 +16,7 @@ public class Room{
         for(String p : participants){
             clock.put(p,0);
         }
-        this.roomsClock = new VectorClock(clock);
+        this.roomClock = new VectorClock(clock);
         this.bufferedMessages = new ArrayList<>();
     }
 
@@ -31,7 +31,7 @@ public class Room{
         /* Ignore if the message is an old message
            This works cuz the client resending the lost messages is always the same
          */
-        if(newClock.getClock().get(sender) <= roomsClock.getClock().get(sender)){
+        if(newClock.getClock().get(sender) <= roomClock.getClock().get(sender)){
             return false;
         }
 
@@ -39,10 +39,10 @@ public class Room{
         if(isAbsent(msg.getContent())){
             bufferedMessages.add(msg);
         }
-        if(newClock.getClock().get(sender) == roomsClock.getClock().get(sender)+1){
+        if(newClock.getClock().get(sender) == roomClock.getClock().get(sender)+1){
             for(String p : participants){
                 if(!Objects.equals(p, sender)){
-                    if(newClock.getClock().get(p)<=roomsClock.getClock().get(p)){
+                    if(newClock.getClock().get(p)<=roomClock.getClock().get(p)){
                         addMessage(msg);
                         removeFromBuffer(msg);
                         return true;
@@ -84,7 +84,7 @@ public class Room{
 
     public void addMessage(Message msg){
         roomMessages.add(msg);
-        roomsClock.increment(msg.getSender()); //not sure about this but i guess it's the same as doing the merge since we must have received all the messages sent before
+        roomClock.increment(msg.getSender()); //not sure about this but i guess it's the same as doing the merge since we must have received all the messages sent before
         System.out.println("Messages for room '" + msg.getRoom() + "':");
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
         sdf.setTimeZone(TimeZone.getDefault());
@@ -98,8 +98,8 @@ public class Room{
         return roomMessages;
     }
 
-    public VectorClock getRoomsClock() {
-        return roomsClock;
+    public VectorClock getRoomClock() {
+        return roomClock;
     }
 
     public List<String> getParticipants() {
