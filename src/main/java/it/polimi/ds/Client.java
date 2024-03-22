@@ -36,7 +36,7 @@ public class Client {
     }
 
     public void createRoom(String roomName, List<String> participants){
-        rooms.put(roomName, new Room(participants));
+        rooms.put(roomName, new Room(roomName, participants));
         Message msg = new Message("Room", this.username, roomName, participants, null, roomName);
         sendMessage(msg);
         System.out.println("> Room '" + roomName + "' has been created.");
@@ -89,7 +89,7 @@ public class Client {
                         switch (msg.getType()) {
                             case "Room":
                                 if (!rooms.containsKey(msg.getContent())) {
-                                    rooms.put(msg.getContent(), new Room(msg.getParticipants()));
+                                    rooms.put(msg.getContent(), new Room(msg.getContent(), msg.getParticipants()));
                                     System.out.print("You have been added to room " + msg.getContent() + "\n> ");
                                 }
                                 break;

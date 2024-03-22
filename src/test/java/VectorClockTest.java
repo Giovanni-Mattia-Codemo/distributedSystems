@@ -19,16 +19,16 @@ public class VectorClockTest {
         Client client3 = new Client("Uno", InetAddress.getByName("224.0.2.0"));
         Client client4 = new Client("Due", InetAddress.getByName("224.0.2.0"));
 
-        clientReceiver(client1, new Scanner(System.in));
-        clientReceiver(client2, new Scanner(System.in));
-        clientReceiver(client3, new Scanner(System.in));
-        clientReceiver(client4, new Scanner(System.in));
+        Thread t1 = clientReceiver(client1, new Scanner(System.in));
+        Thread t2 = clientReceiver(client2, new Scanner(System.in));
+        Thread t3 = clientReceiver(client3, new Scanner(System.in));
+        Thread t4 = clientReceiver(client4, new Scanner(System.in));
 
         client1.createRoom("sksksk", Arrays.asList("Fede", "Gio", "Uno", "Due"));
         Thread.sleep(100);
 
-        client1.printRoomList();
-        client2.printRoomList();
+        //client1.printRoomList();
+        //client2.printRoomList();
 
         System.out.println(client1.createMessage("sksksk", "Message", "ciao!").getVectorClock().toString());
         System.out.println(client2.createMessage("sksksk", "Message", "i limoni signora").getVectorClock().toString());
@@ -43,7 +43,7 @@ public class VectorClockTest {
         Thread.sleep(200);
     }
 
-    public void clientReceiver(Client client, Scanner scanner) {
+    public Thread clientReceiver(Client client, Scanner scanner) {
         // Start a thread to receive messages
         ClientHandler clientHandler = new ClientHandler(scanner, client);
         Thread receiverThread = new Thread(clientHandler);
@@ -56,5 +56,7 @@ public class VectorClockTest {
             }
         });
         receiver.start();
+
+        return receiver;
     }
 }
