@@ -19,7 +19,12 @@ public class Message implements Serializable {
         this.content = content;
         this.participants = participants;
         this.room = room;
-        this.vectorClock = vectorClock;
+        if(vectorClock != null) {
+            this.vectorClock = new VectorClock(vectorClock.getClock());
+        }
+        else {
+            this.vectorClock = vectorClock;
+        }
     }
 
     public String getRoom() {

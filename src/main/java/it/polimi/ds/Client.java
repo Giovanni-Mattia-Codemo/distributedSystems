@@ -11,7 +11,7 @@ public class Client {
     private MulticastSocket clientSocket;
     private final String username;
     private final HashMap<String, Room> rooms;
-    private final InetAddress group;
+    private InetAddress group;
 
     private final UpToDateChecker upToDateChecker;
 
@@ -52,13 +52,15 @@ public class Client {
 
         //Implement vector clock
         VectorClock vectorClock = rooms.get(room).getRoomClock();
+        Message msg = new Message(type, this.username, content, participants, vectorClock, room);
+
         if(!type.equals("Resend")) {
             vectorClock.increment(this.username);
         }
+        if(type.equals("Message")) {
+            rooms.get(room).getRoomMessages().add(msg);
+        }
         
-        //End vector clock computation
-
-        Message msg = new Message(type, this.username, content, participants, vectorClock, room);
         sendMessage(msg);
 
         return msg;
@@ -122,13 +124,18 @@ public class Client {
                                     VectorClock receivedVectorClock = msg.getVectorClock();
                                     boolean resend = false;
 
+                                    //System.out.println("[" + username + "] RICEVUTA RESEND DA " + msg.getSender() + " PER ROOM " + msg.getRoom()); //
+                                    //System.out.println("    RECEIVED CLOCK: " + msg.getVectorClock().getClock().toString()); //
+
                                     for(Message m : room.getRoomMessages()) {
+                                        //System.out.println("    " + m.getContent() + ": " + m.getVectorClock().getClock().toString()); //
                                         if(!resend) {
                                             VectorClock clientVectorClock = m.getVectorClock();
-                                            for (Map.Entry<String, Integer> entry : clientVectorClock.getClock().entrySet()) {
+                                            for(Map.Entry<String, Integer> entry : clientVectorClock.getClock().entrySet()) {
                                                 String participant = entry.getKey();
                                                 int clientClockValue = entry.getValue();
                                                 int receivedClockValue = receivedVectorClock.getClock().get(participant);
+                                                //System.out.println("        "+ participant + " ClientVal: " + clientClockValue + "ReceivedVal"+receivedClockValue);
                                         
                                                 if (!participant.equals(msg.getSender()) && clientClockValue == receivedClockValue + 1) {
                                                     resend = true;
@@ -138,6 +145,7 @@ public class Client {
 
                                         if(resend) {
                                             sendMessage(m);
+                                            //System.out.println("MANDO NUOVAMENTE " + m.getContent());
                                         }
                                     }
                                 }
@@ -206,8 +214,31 @@ public class Client {
         return clientSocket;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
     public Map<String, Room> getRooms() {
         return rooms;
+    }
+
+    public MulticastSocket getSocket() {
+        return clientSocket;
+    }
+
+    public InetAddress getGroup() {
+        return group;
+    }
+
+    public void setGroup(InetAddress group) {
+        this.group = group;
+
+        try {
+            clientSocket = new MulticastSocket(port);
+            clientSocket.joinGroup(new InetSocketAddress(group, port), NetworkInterface.getByInetAddress(InetAddress.getLocalHost())); //change this to allow multicast
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
