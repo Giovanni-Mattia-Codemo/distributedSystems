@@ -13,11 +13,14 @@ public class Client {
     private final HashMap<String, Room> rooms;
     private final InetAddress group;
 
+    private final UpToDateChecker upToDateChecker;
+
     public Client(String name, InetAddress group){
         this.username = name;
         this.rooms = new HashMap<>();
         this.port = 5000;
         this.group = group;
+        this.upToDateChecker = new UpToDateChecker(this);
 
         try {
             clientSocket = new MulticastSocket(port);
@@ -25,6 +28,8 @@ public class Client {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        upToDateChecker.startCheckingTimer();
     }
 
     public void deleteRoom(String room){
@@ -47,7 +52,10 @@ public class Client {
 
         //Implement vector clock
         VectorClock vectorClock = rooms.get(room).getRoomClock();
-        vectorClock.increment(this.username);
+        if(!type.equals("Resend")) {
+            vectorClock.increment(this.username);
+        }
+        
         //End vector clock computation
 
         Message msg = new Message(type, this.username, content, participants, vectorClock, room);
@@ -101,6 +109,38 @@ public class Client {
                                 rooms.remove(msg.getContent());
                                 System.out.print("Room \"" + msg.getContent() + "\" has been deleted.\n> ");
                                 break;
+                            case "Resend":
+                                /*
+                                 * Content field of resend message is the expected receiver
+                                 * 
+                                 * It is performed a scan over the messages list of the specified room, in which the messages are already sorted causally. Once we find the first occurrence of a non-delivered message (where clientClockValue == receivedClockValue + 1 for some participant different from the sender of the Resend message) we know that it has to be delivered again along with all the following messages in the list.
+                                 * 
+                                 * Due to multicast the retransmission of a message happens to all the client in the room but we don't bother since non-interested clients simply filter it out when checking its vector clock value.
+                                 */
+                                if(msg.getContent().equals(username)) {
+                                    Room room = rooms.get(msg.getRoom());
+                                    VectorClock receivedVectorClock = msg.getVectorClock();
+                                    boolean resend = false;
+
+                                    for(Message m : room.getRoomMessages()) {
+                                        if(!resend) {
+                                            VectorClock clientVectorClock = m.getVectorClock();
+                                            for (Map.Entry<String, Integer> entry : clientVectorClock.getClock().entrySet()) {
+                                                String participant = entry.getKey();
+                                                int clientClockValue = entry.getValue();
+                                                int receivedClockValue = receivedVectorClock.getClock().get(participant);
+                                        
+                                                if (!participant.equals(msg.getSender()) && clientClockValue == receivedClockValue + 1) {
+                                                    resend = true;
+                                                }
+                                            }
+                                        }
+
+                                        if(resend) {
+                                            sendMessage(m);
+                                        }
+                                    }
+                                }
                             default:
                                 break;
                         }
@@ -131,6 +171,8 @@ public class Client {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        upToDateChecker.stop();
     }
 
     public static void main(String[] args){
@@ -163,4 +205,9 @@ public class Client {
     public MulticastSocket getClientSocket() {
         return clientSocket;
     }
+
+    public Map<String, Room> getRooms() {
+        return rooms;
+    }
+
 }
