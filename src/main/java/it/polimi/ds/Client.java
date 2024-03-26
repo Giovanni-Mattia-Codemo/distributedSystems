@@ -52,17 +52,18 @@ public class Client {
 
         //Implement vector clock
         VectorClock vectorClock = rooms.get(room).getRoomClock();
-        Message msg = new Message(type, this.username, content, participants, vectorClock, room);
 
         if(!type.equals("Resend")) {
             vectorClock.increment(this.username);
         }
+
+        Message msg = new Message(type, this.username, content, participants, vectorClock, room);
+        
         if(type.equals("Message")) {
             rooms.get(room).getRoomMessages().add(msg);
         }
-        
-        sendMessage(msg);
 
+        sendMessage(msg);
         return msg;
     }
 

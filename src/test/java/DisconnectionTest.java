@@ -21,28 +21,31 @@ public class DisconnectionTest {
     public void testVectorClock() throws UnknownHostException, InterruptedException {
         Client client1 = new Client("Fede", InetAddress.getByName("224.0.2.0"));
         Client client2 = new Client("Gio", InetAddress.getByName("224.0.2.0"));
+        Client client3 = new Client("Simo", InetAddress.getByName("224.0.2.0"));
 
-        Thread t1 = clientReceiver(client1, new Scanner(System.in));
-        Thread t2 = clientReceiver(client2, new Scanner(System.in));
+        clientReceiver(client1, new Scanner(System.in));
+        clientReceiver(client2, new Scanner(System.in));
+        clientReceiver(client3, new Scanner(System.in));
 
-        client1.createRoom("sksksk", Arrays.asList("Fede", "Gio"));
+        client1.createRoom("sksksk", Arrays.asList("Fede", "Gio", "Simo"));
         Thread.sleep(4000);
 
         System.out.println(client1.createMessage("sksksk", "Message", "ciao!").getVectorClock().toString());
 
-        System.out.println(client2.createMessage("sksksk", "Message", "i limoni signora").getVectorClock().toString());
-        System.out.println(client1.createMessage("sksksk", "Message", ":/").getVectorClock().toString());
+        System.out.println(client3.createMessage("sksksk", "Message", "i limoni signora").getVectorClock().toString());
+        System.out.println(client2.createMessage("sksksk", "Message", ":/").getVectorClock().toString());
 
         Thread.sleep(1000);
 
         stopCommunication(client1);
         System.out.println(client2.createMessage("sksksk", "Message", "://").getVectorClock().toString());
         Thread.sleep(1000);
-        System.out.println(client2.createMessage("sksksk", "Message", ":///").getVectorClock().toString());
+        System.out.println(client3.createMessage("sksksk", "Message", ":///").getVectorClock().toString());
         Thread.sleep(1000);
         System.out.println(client2.createMessage("sksksk", "Message", ":////").getVectorClock().toString());
         Thread.sleep(1000);
-        System.out.println(client2.createMessage("sksksk", "Message", "://///").getVectorClock().toString());
+        System.out.println(client3.createMessage("sksksk", "Message", "://///").getVectorClock().toString());
+        Thread.sleep(1000);
         resumeCommunication(client1, "224.0.2.0");
 
         Thread.sleep(5000);
