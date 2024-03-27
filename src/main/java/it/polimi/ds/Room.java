@@ -81,12 +81,11 @@ public class Room{
     public void addMessage(Message msg){
         roomMessages.add(msg);
         roomClock.increment(msg.getSender()); //not sure about this but i guess it's the same as doing the merge since we must have received all the messages sent before
-        System.out.println("Messages for room '" + msg.getRoom() + "':");
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
         sdf.setTimeZone(TimeZone.getDefault());
         Calendar calendar = Calendar.getInstance();
         String formattedTime = sdf.format(calendar.getTime());
-        System.out.println("[" + formattedTime + "] [" + msg.getSender() + "]: " + msg.getContent());
+        System.out.println("[" + formattedTime + "] [" + msg.getRoom() + "] [" + msg.getSender() + "]: " + msg.getContent());
         checkMessages();
     }
 

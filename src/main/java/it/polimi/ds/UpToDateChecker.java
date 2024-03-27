@@ -20,12 +20,15 @@ public class UpToDateChecker {
             @Override
             public void run() {
                 for(Room room : client.getRooms().values()) {
-                    String randomParticipant = getRandomParticipant(room, client.getUsername());
-                    client.createMessage(room.getRoomName(), "Resend", randomParticipant);
+                    for(String username : room.getParticipants()) {
+                        client.createMessage(room.getRoomName(), "Resend", username);
+                    }
                 }
             }
         }, 0, RESEND_INTERVAL_MS);
     }
+
+    /* 
 
     public String getRandomParticipant(Room room, String excludeParticipant) {
         List<String> participants = new ArrayList<>(room.getParticipants());
@@ -33,6 +36,8 @@ public class UpToDateChecker {
         
         return participants.isEmpty() ? null : participants.get(random.nextInt(participants.size()));
     }
+
+    */
 
     public void stop() {
         checkTimer.cancel();
