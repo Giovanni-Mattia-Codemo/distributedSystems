@@ -114,40 +114,37 @@ public class Client {
                                 break;
                             case "Resend":
                                 /*
-                                 * Content field of resend message is the expected receiver
-                                 * 
                                  * It is performed a scan over the messages list of the specified room, in which the messages are already sorted causally. Once we find the first occurrence of a non-delivered message (where clientClockValue == receivedClockValue + 1 for some participant different from the sender of the Resend message) we know that it has to be delivered again along with all the following messages in the list.
                                  * 
                                  * Due to multicast the retransmission of a message happens to all the client in the room but we don't bother since non-interested clients simply filter it out when checking its vector clock value.
                                  */
-                                if(msg.getContent().equals(username)) {
-                                    Room room = rooms.get(msg.getRoom());
-                                    VectorClock receivedVectorClock = msg.getVectorClock();
-                                    boolean resend = false;
 
-                                    //System.out.println("[" + username + "] RICEVUTA RESEND DA " + msg.getSender() + " PER ROOM " + msg.getRoom()); //
-                                    //System.out.println("    RECEIVED CLOCK: " + msg.getVectorClock().getClock().toString()); //
+                                Room room = rooms.get(msg.getRoom());
+                                VectorClock receivedVectorClock = msg.getVectorClock();
+                                boolean resend = false;
 
-                                    for(Message m : room.getRoomMessages()) {
-                                        //System.out.println("    " + m.getContent() + ": " + m.getVectorClock().getClock().toString()); //
-                                        if(!resend) {
-                                            VectorClock clientVectorClock = m.getVectorClock();
-                                            for(Map.Entry<String, Integer> entry : clientVectorClock.getClock().entrySet()) {
-                                                String participant = entry.getKey();
-                                                int clientClockValue = entry.getValue();
-                                                int receivedClockValue = receivedVectorClock.getClock().get(participant);
-                                                //System.out.println("        "+ participant + " ClientVal: " + clientClockValue + "ReceivedVal"+receivedClockValue);
+                                //System.out.println("[" + username + "] RICEVUTA RESEND DA " + msg.getSender() + " PER ROOM " + msg.getRoom()); //
+                                //System.out.println("    RECEIVED CLOCK: " + msg.getVectorClock().getClock().toString()); //
+
+                                for(Message m : room.getRoomMessages()) {
+                                    //System.out.println("    " + m.getContent() + ": " + m.getVectorClock().getClock().toString()); //
+                                    if(!resend) {
+                                        VectorClock clientVectorClock = m.getVectorClock();
+                                        for(Map.Entry<String, Integer> entry : clientVectorClock.getClock().entrySet()) {
+                                            String participant = entry.getKey();
+                                            int clientClockValue = entry.getValue();
+                                            int receivedClockValue = receivedVectorClock.getClock().get(participant);
+                                            //System.out.println("        "+ participant + " ClientVal: " + clientClockValue + "ReceivedVal"+receivedClockValue);
                                         
-                                                if (!participant.equals(msg.getSender()) && clientClockValue == receivedClockValue + 1) {
-                                                    resend = true;
-                                                }
+                                            if (!participant.equals(msg.getSender()) && clientClockValue == receivedClockValue + 1) {
+                                                resend = true;
                                             }
                                         }
+                                    }
 
-                                        if(resend) {
-                                            sendMessage(m);
-                                            //System.out.println("MANDO NUOVAMENTE " + m.getContent());
-                                        }
+                                    if(resend) {
+                                        sendMessage(m);
+                                        //System.out.println("MANDO NUOVAMENTE " + m.getContent());
                                     }
                                 }
                             default:

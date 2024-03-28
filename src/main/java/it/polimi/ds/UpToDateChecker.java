@@ -20,9 +20,7 @@ public class UpToDateChecker {
             @Override
             public void run() {
                 for(Room room : client.getRooms().values()) {
-                    for(String username : room.getParticipants()) {
-                        client.createMessage(room.getRoomName(), "Resend", username);
-                    }
+                    client.createMessage(room.getRoomName(), "Resend", null);
                 }
             }
         }, 0, RESEND_INTERVAL_MS);
