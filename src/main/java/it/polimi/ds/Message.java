@@ -13,16 +13,16 @@ public class Message implements Serializable {
     private VectorClock vectorClock;
     private List<String> participants;
 
-    public Message(String type, String sender, String content, List<String> participants, VectorClock vectorClock, String room) {
+    public Message(String type, String sender, String content, List<String> participants, VectorClock vectorClock,
+            String room) {
         this.type = type;
         this.sender = sender;
         this.content = content;
         this.participants = participants;
         this.room = room;
-        if(vectorClock != null) {
+        if (vectorClock != null) {
             this.vectorClock = new VectorClock(vectorClock.getClock());
-        }
-        else {
+        } else {
             this.vectorClock = vectorClock;
         }
     }
@@ -35,7 +35,9 @@ public class Message implements Serializable {
         return participants;
     }
 
-    public String getType(){return type;}
+    public String getType() {
+        return type;
+    }
 
     public String getSender() {
         return sender;

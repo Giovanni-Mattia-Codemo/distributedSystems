@@ -47,11 +47,11 @@ public class DisconnectionTest {
         System.out.println(client3.createMessage("sksksk", "Message", "://///").getVectorClock().toString());
         Thread.sleep(1000);
         resumeCommunication(client1, "224.0.2.0");
-        Thread.sleep(100);
         System.out.println(client3.createMessage("sksksk", "Message", "Dopo le faccine").getVectorClock().toString());
         Thread.sleep(5000);
         System.out.println(client1.createMessage("sksksk", "Message", "FINE").getVectorClock().toString());
-        Thread.sleep(1000);
+        Thread.sleep(10000);
+        System.out.println(client2.createMessage("sksksk", "Message", "FINE2").getVectorClock().toString());
 
 
     }

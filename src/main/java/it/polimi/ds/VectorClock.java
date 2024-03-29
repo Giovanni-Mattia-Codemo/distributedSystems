@@ -15,6 +15,7 @@ public class VectorClock implements Serializable {
     public Map<String, Integer> getClock() {
         return clock;
     }
+
     public void increment(String participant) {
         clock.put(participant, clock.get(participant) + 1);
     }

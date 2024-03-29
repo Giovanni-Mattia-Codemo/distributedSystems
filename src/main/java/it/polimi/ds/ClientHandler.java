@@ -60,7 +60,8 @@ public class ClientHandler implements Runnable {
         System.out.println("Legend:");
         System.out.println("- /send <room_name> <message>: Send a message to the specified room.");
         System.out.println("  Example: /send room1 Hello, everyone!");
-        System.out.println("- /create <room_name> <participant1> <participant2> ...: Create a new room with the given name and participants.");
+        System.out.println(
+                "- /create <room_name> <participant1> <participant2> ...: Create a new room with the given name and participants.");
         System.out.println("  Example: /create room2 user1 user2");
         System.out.println("- /delete <room_name>: Delete the specified room. Only available to the room creator.");
         System.out.println("  Example: /delete room2");
