@@ -23,6 +23,30 @@ public class Client {
         connect();
     }
 
+    public static NetworkInterface findWifiNetworkInterface() {
+
+        Enumeration<NetworkInterface> enumeration = null;
+    
+        try {
+            enumeration = NetworkInterface.getNetworkInterfaces();
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+    
+        NetworkInterface wlan0 = null;
+    
+        while (enumeration.hasMoreElements()) {
+    
+            wlan0 = enumeration.nextElement();
+    
+            if (wlan0.getName().equals("wlan0")) {
+                return wlan0;
+            }
+        }
+    
+        return null;
+    }
+
     public void deleteRoom(String room){
         if(rooms.containsKey(room)) {
             createMessage(room, "Deletion", room);
@@ -31,17 +55,18 @@ public class Client {
         else System.out.println("You cannot delete a room you are not a participant of.");
     }
 
-    public void connect(){
+    public void connect() {
         this.upToDateChecker = new UpToDateChecker(this);
-
+    
         try {
             clientSocket = new MulticastSocket(port);
-            clientSocket.joinGroup(new InetSocketAddress(group, port), NetworkInterface.getByInetAddress(InetAddress.getLocalHost())); //change this to allow multicast
+            NetworkInterface iface = findWifiNetworkInterface();
+            clientSocket.joinGroup(new InetSocketAddress(group, port), iface);
+    
         } catch (IOException e) {
             e.printStackTrace();
         }
         upToDateChecker.startCheckingTimer();
-
     }
 
     public void createRoom(String roomName, List<String> participants){
@@ -90,7 +115,7 @@ public class Client {
 
     public void receiveMessage(){
         try {
-            while (true) {
+            while (!clientSocket.isClosed()) {
                 byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 //block waiting for new message
@@ -193,7 +218,7 @@ public class Client {
     public static void main(String[] args){
         InetAddress group = null;
         try {
-            group = InetAddress.getByName("224.0.2.0");
+            group = InetAddress.getByName("239.1.1.1");
         } catch (UnknownHostException e) {
             e.printStackTrace();
             System.exit(-1);
@@ -210,7 +235,7 @@ public class Client {
         receiverThread.start();
 
         Thread receiver = new Thread(() -> {
-            while (true) {
+            while (!client.getClientSocket().isClosed()) {
                 client.receiveMessage();
             }
         });
