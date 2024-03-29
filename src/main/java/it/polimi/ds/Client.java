@@ -13,23 +13,14 @@ public class Client {
     private final HashMap<String, Room> rooms;
     private InetAddress group;
 
-    private final UpToDateChecker upToDateChecker;
+    private UpToDateChecker upToDateChecker;
 
     public Client(String name, InetAddress group){
         this.username = name;
         this.rooms = new HashMap<>();
         this.port = 5000;
         this.group = group;
-        this.upToDateChecker = new UpToDateChecker(this);
-
-        try {
-            clientSocket = new MulticastSocket(port);
-            clientSocket.joinGroup(new InetSocketAddress(group, port), NetworkInterface.getByInetAddress(InetAddress.getLocalHost())); //change this to allow multicast
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        upToDateChecker.startCheckingTimer();
+        connect();
     }
 
     public void deleteRoom(String room){
@@ -38,6 +29,19 @@ public class Client {
             rooms.remove(room);
         }
         else System.out.println("You cannot delete a room you are not a participant of.");
+    }
+
+    public void connect(){
+        this.upToDateChecker = new UpToDateChecker(this);
+
+        try {
+            clientSocket = new MulticastSocket(port);
+            clientSocket.joinGroup(new InetSocketAddress(group, port), NetworkInterface.getByInetAddress(InetAddress.getLocalHost())); //change this to allow multicast
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        upToDateChecker.startCheckingTimer();
+
     }
 
     public void createRoom(String roomName, List<String> participants){
@@ -78,16 +82,17 @@ public class Client {
             outputStream.close();
             byteStream.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            upToDateChecker.stop();
+            upToDateChecker.startCheckingTimer();
         }
+
     }
 
     public void receiveMessage(){
         try {
-            while (!clientSocket.isClosed()) {
+            while (true) {
                 byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-
                 //block waiting for new message
                 clientSocket.receive(packet);
                 ByteArrayInputStream byteStream = new ByteArrayInputStream(packet.getData());
@@ -96,12 +101,15 @@ public class Client {
 
 
                 if (obj instanceof Message msg) {
-                    if (msg.getParticipants().contains(username)) {
+                    if (msg.getParticipants().contains(username)&&!msg.getSender().equals(username)) {
                         switch (msg.getType()) {
                             case "Room":
                                 if (!rooms.containsKey(msg.getContent())) {
+                                    upToDateChecker.stop();
                                     rooms.put(msg.getContent(), new Room(msg.getContent(), msg.getParticipants()));
                                     System.out.print("You have been added to room " + msg.getContent() + "\n> ");
+                                    upToDateChecker = new UpToDateChecker(this);
+                                    upToDateChecker.startCheckingTimer();
                                 }
                                 break;
                             case "Message":
@@ -118,7 +126,6 @@ public class Client {
                                  * 
                                  * Due to multicast the retransmission of a message happens to all the client in the room but we don't bother since non-interested clients simply filter it out when checking its vector clock value.
                                  */
-
                                 Room room = rooms.get(msg.getRoom());
                                 VectorClock receivedVectorClock = msg.getVectorClock();
                                 boolean resend = false;
@@ -134,19 +141,20 @@ public class Client {
                                             String participant = entry.getKey();
                                             int clientClockValue = entry.getValue();
                                             int receivedClockValue = receivedVectorClock.getClock().get(participant);
-                                            //System.out.println("        "+ participant + " ClientVal: " + clientClockValue + "ReceivedVal"+receivedClockValue);
-                                        
+                                            //System.out.println("        "+ participant + " ClientVal: " + clientClockValue + "ReceivedVal +receivedClockValue);
+    
                                             if (!participant.equals(msg.getSender()) && clientClockValue == receivedClockValue + 1) {
                                                 resend = true;
-                                            }
+                                            }            
                                         }
                                     }
-
+                                    
                                     if(resend) {
                                         sendMessage(m);
-                                        //System.out.println("MANDO NUOVAMENTE " + m.getContent());
                                     }
                                 }
+
+                                break;
                             default:
                                 break;
                         }
@@ -161,6 +169,7 @@ public class Client {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+
     }
 
     public void printRoomList(){
@@ -201,7 +210,7 @@ public class Client {
         receiverThread.start();
 
         Thread receiver = new Thread(() -> {
-            while (!client.clientSocket.isClosed()) {
+            while (true) {
                 client.receiveMessage();
             }
         });
