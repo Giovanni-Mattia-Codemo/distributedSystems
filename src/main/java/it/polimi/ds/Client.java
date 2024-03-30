@@ -23,30 +23,6 @@ public class Client {
         connect();
     }
 
-    public static NetworkInterface findWifiNetworkInterface() {
-
-        Enumeration<NetworkInterface> enumeration = null;
-
-        try {
-            enumeration = NetworkInterface.getNetworkInterfaces();
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
-
-        NetworkInterface wlan0 = null;
-
-        while (enumeration.hasMoreElements()) {
-
-            wlan0 = enumeration.nextElement();
-
-            if (wlan0.getName().equals("wlan0")) {
-                return wlan0;
-            }
-        }
-
-        return null;
-    }
-
     public void deleteRoom(String room) {
         synchronized (rooms) {
             if (rooms.containsKey(room)) {
@@ -59,22 +35,21 @@ public class Client {
 
     public void connect() {
         this.upToDateChecker = new UpToDateChecker(this);
-
+    
         try {
             clientSocket = new MulticastSocket(port);
-            NetworkInterface iface = findWifiNetworkInterface();
-            /*
-             * per usare i test in locale
-             * NetworkInterface iface =
-             * NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
-             */
+            NetworkInterface iface =
+              NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
+             
             clientSocket.joinGroup(new InetSocketAddress(group, port), iface);
-
-        } catch (IOException e) {
+  
+        upToDateChecker.startCheckingTimer();
+        }catch(IOException e){
             e.printStackTrace();
         }
-        upToDateChecker.startCheckingTimer();
     }
+
+    
 
     public void createRoom(String roomName, List<String> participants) {
         synchronized (rooms) {
@@ -119,7 +94,8 @@ public class Client {
             outputStream.close();
             byteStream.close();
         } catch (IOException e) {
-            // upToDateChecker.stop();
+            upToDateChecker.stop();
+            upToDateChecker = new UpToDateChecker(this);
             upToDateChecker.startCheckingTimer();
         }
 
@@ -158,6 +134,7 @@ public class Client {
                                     System.out.println("[!] Room '" + msg.getContent() + "' has been deleted");
                                     break;
                                 case "Resend":
+                                    System.out.println(msg.getSender());
                                     /*
                                      * It is performed a scan over the messages list of the specified room, in which
                                      * the messages are already sorted causally. Once we find the first occurrence
@@ -221,6 +198,7 @@ public class Client {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+        System.out.println("Closing socket");
 
     }
 
