@@ -71,7 +71,7 @@ public class Client {
 
     public void connect() {
         this.upToDateChecker = new UpToDateChecker(this);
-
+    
         try {
             clientSocket = new MulticastSocket(port);
             NetworkInterface iface = findActiveWifiInterface();
@@ -81,12 +81,14 @@ public class Client {
              * NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
              */
             clientSocket.joinGroup(new InetSocketAddress(group, port), iface);
-
-        } catch (IOException e) {
+  
+        upToDateChecker.startCheckingTimer();
+        }catch(IOException e){
             e.printStackTrace();
         }
-        upToDateChecker.startCheckingTimer();
     }
+
+    
 
     public void createRoom(String roomName, List<String> participants) {
         synchronized (rooms) {
@@ -131,7 +133,8 @@ public class Client {
             outputStream.close();
             byteStream.close();
         } catch (IOException e) {
-            // upToDateChecker.stop();
+            upToDateChecker.stop();
+            upToDateChecker = new UpToDateChecker(this);
             upToDateChecker.startCheckingTimer();
         }
 
@@ -233,6 +236,7 @@ public class Client {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+        System.out.println("Closing socket");
 
     }
 
