@@ -23,28 +23,40 @@ public class Client {
         connect();
     }
 
-    public static NetworkInterface findWifiNetworkInterface() {
-
-        Enumeration<NetworkInterface> enumeration = null;
-
+    public static NetworkInterface findActiveWifiInterface() {
+        Enumeration<NetworkInterface> interfaces;
         try {
-            enumeration = NetworkInterface.getNetworkInterfaces();
+            interfaces = NetworkInterface.getNetworkInterfaces();
         } catch (SocketException e) {
             e.printStackTrace();
+            return null;
         }
 
-        NetworkInterface wlan0 = null;
-
-        while (enumeration.hasMoreElements()) {
-
-            wlan0 = enumeration.nextElement();
-
-            if (wlan0.getName().equals("wlan0")) {
-                return wlan0;
+        while (interfaces.hasMoreElements()) {
+            NetworkInterface iface = interfaces.nextElement();
+            try {
+                if (iface.isUp() && !iface.isLoopback() && hasIpAddress(iface)) {
+                    System.out.println(iface.getName());
+                    return iface;
+                }
+            } catch (SocketException e) {
+                e.printStackTrace();
             }
         }
 
-        return null;
+        return null; // Active Wi-Fi interface not found
+    }
+
+    private static boolean hasIpAddress(NetworkInterface iface) {
+        Enumeration<InetAddress> addresses = iface.getInetAddresses();
+        while (addresses.hasMoreElements()) {
+            InetAddress addr = addresses.nextElement();
+            // Exclude IPv6 addresses and loopback addresses
+            if (!addr.isLoopbackAddress() && addr.getHostAddress().indexOf(':') == -1) {
+                return true; // Found an IPv4 address
+            }
+        }
+        return false; // No valid IP address found
     }
 
     public void deleteRoom(String room) {
@@ -62,7 +74,7 @@ public class Client {
 
         try {
             clientSocket = new MulticastSocket(port);
-            NetworkInterface iface = findWifiNetworkInterface();
+            NetworkInterface iface = findActiveWifiInterface();
             /*
              * per usare i test in locale
              * NetworkInterface iface =
