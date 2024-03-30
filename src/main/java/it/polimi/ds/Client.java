@@ -53,7 +53,7 @@ public class Client {
                 createMessage(room, "Deletion", room);
                 rooms.remove(room);
             } else
-                System.out.println("You cannot delete a room you are not a participant of.");
+                System.out.println("[!] You cannot delete a room you are not a participant of");
         }
     }
 
@@ -82,17 +82,15 @@ public class Client {
         }
         Message msg = new Message("Room", this.username, roomName, participants, null, roomName);
         sendMessage(msg);
-        System.out.println("> Room '" + roomName + "' has been created.");
+        System.out.println("[!] Room '" + roomName + "' has been created");
 
     }
 
     public synchronized Message createMessage(String room, String type, String content) {
         Message msg;
 
-        synchronized (room) {
+        synchronized (rooms) {
             List<String> participants = rooms.get(room).getParticipants();
-
-            // Implement vector clock
             VectorClock vectorClock = rooms.get(room).getRoomClock();
 
             if (!type.equals("Resend")) {
@@ -146,7 +144,7 @@ public class Client {
                                     if (!rooms.containsKey(msg.getContent())) {
                                         upToDateChecker.stop();
                                         rooms.put(msg.getContent(), new Room(msg.getContent(), msg.getParticipants()));
-                                        System.out.print("You have been added to room " + msg.getContent() + "\n> ");
+                                        System.out.println("[!] You have been added to room '" + msg.getContent() + "'");
                                         upToDateChecker = new UpToDateChecker(this);
                                         upToDateChecker.startCheckingTimer();
                                     }
@@ -157,7 +155,7 @@ public class Client {
                                     break;
                                 case "Deletion":
                                     rooms.remove(msg.getContent());
-                                    System.out.print("Room \"" + msg.getContent() + "\" has been deleted.\n> ");
+                                    System.out.println("[!] Room '" + msg.getContent() + "' has been deleted");
                                     break;
                                 case "Resend":
                                     /*
@@ -219,7 +217,7 @@ public class Client {
             }
         } catch (SocketException | AsynchronousCloseException e) {
             // Socket closed, break out of the loop
-            System.out.println("Socket closed. Stopping receiving messages.");
+            System.out.println("[!] Socket closed. Stopping receiving messages.");
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -227,7 +225,7 @@ public class Client {
     }
 
     public void printRoomList() {
-        System.out.println("You are a member of the following rooms:");
+        System.out.println("[!] You are a member of the following rooms:");
         synchronized (rooms) {
             for (String roomName : rooms.keySet()) {
                 System.out.println("- " + roomName);

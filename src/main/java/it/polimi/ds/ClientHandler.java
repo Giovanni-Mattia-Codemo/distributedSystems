@@ -32,7 +32,6 @@ public class ClientHandler implements Runnable {
 
         while (running) {
             try {
-                System.out.print("> ");
                 String input = in.nextLine().trim().toLowerCase();
                 String[] parts = input.split(" ", 2);
                 String command = parts[0];
@@ -45,10 +44,10 @@ public class ClientHandler implements Runnable {
                     case "/create" -> handleCreateCommand(args);
                     case "/delete" -> handleDeleteCommand(args);
                     case "/send" -> handleSendMessageCommand(args);
-                    default -> System.out.println("Invalid command. Type '/help' to see available commands.");
+                    default -> System.out.println("[!] Invalid command. Type '/help' to see available commands.");
                 }
             } catch (RuntimeException e) {
-                System.out.println("An error occurred: " + e.getMessage());
+                System.out.println("[!] An error occurred: " + e.getMessage());
                 running = false;
             }
         }
@@ -73,7 +72,7 @@ public class ClientHandler implements Runnable {
     private void handleCreateCommand(String args) {
         String[] parts = args.split(" ");
         if (parts.length < 2) {
-            System.out.println("Invalid format. Usage: /create <room_name> <participant1> <participant2> ...");
+            System.out.println("[!] Invalid format. Usage: /create <room_name> <participant1> <participant2> ...");
         } else {
             String roomName = parts[0];
             List<String> participants = Arrays.asList(Arrays.copyOfRange(parts, 1, parts.length));
@@ -83,7 +82,7 @@ public class ClientHandler implements Runnable {
 
     private void handleDeleteCommand(String args) {
         if (args.isEmpty()) {
-            System.out.println("Invalid format. Usage: /delete <room_name>");
+            System.out.println("[!] Invalid format. Usage: /delete <room_name>");
         } else {
             client.deleteRoom(args);
         }
@@ -92,7 +91,7 @@ public class ClientHandler implements Runnable {
     private void handleSendMessageCommand(String args) {
         String[] parts = args.split(" ", 2);
         if (parts.length != 2) {
-            System.out.println("Invalid format. Usage: /send <room_name> <message>");
+            System.out.println("[!] Invalid format. Usage: /send <room_name> <message>");
         } else {
             String roomName = parts[0];
             String message = parts[1];
