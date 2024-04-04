@@ -19,6 +19,10 @@ public class UpToDateChecker {
                 synchronized (client.getRooms()) {
                     for (Room room : client.getRooms().values()) {
                         client.createMessage(room.getRoomName(), "Resend", null);
+
+                        room.updateMinimumClock();
+                        room.removeDeliveredMessagesToAll();
+                        //System.out.println("MESSAGGI DI " + client.getUsername() + ": " + room.getRoomMessages()); 
                     }
                 }
             }

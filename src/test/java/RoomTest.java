@@ -14,7 +14,7 @@ public class RoomTest {
         List<String> users = new ArrayList<>();
         users.add("Gio");
         users.add("Fede");
-        Room room = new Room("boh",users);
+        Room room = new Room("boh","Gio",users);
 
         Map<String, Integer> map = new HashMap<>();
         map.put("Gio", 0);

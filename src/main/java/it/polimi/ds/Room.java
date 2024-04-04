@@ -5,38 +5,48 @@ import java.util.*;
 
 public class Room {
     private final String roomName;
+    private final String username;
     private final List<String> participants;
-    private VectorClock roomClock;
+    private HashMap<String, VectorClock> participantsClock;
+    private VectorClock minimumClock;
     private final List<Message> roomMessages;
     private final List<Message> bufferedMessages;
 
-    public Room(String roomName, List<String> participants) {
+    public Room(String roomName, String username, List<String> participants) {
         this.roomName = roomName;
-        this.roomMessages = new ArrayList<>();
+        this.username = username;
         this.participants = participants;
+        roomMessages = new ArrayList<>();
+        bufferedMessages = new ArrayList<>();
+        
         Map<String, Integer> clock = new HashMap<>();
         for (String p : participants) {
             clock.put(p, 0);
         }
-        this.roomClock = new VectorClock(clock);
-        this.bufferedMessages = new ArrayList<>();
+
+        participantsClock = new HashMap<>();
+        for (String p : participants) {
+            participantsClock.put(p, new VectorClock(clock));
+        }
+
+        minimumClock = new VectorClock(clock);
     }
 
     public synchronized boolean computeVectorClock(Message msg) {
         String sender = msg.getSender();
         VectorClock newClock = msg.getVectorClock();
 
-        if (newClock.getClock().get(sender) <= roomClock.getClock().get(sender)) {
+        if (newClock.getClock().get(sender) <= getRoomClock().getClock().get(sender)) {
             return false;
         }
 
         if (isAbsent(msg.getContent())) {
             insertInBuffer(msg);
         }
-        if (newClock.getClock().get(sender) == roomClock.getClock().get(sender) + 1) {
+        if (newClock.getClock().get(sender) == getRoomClock().getClock().get(sender) + 1) {
             for (String p : participants) {
                 if (!Objects.equals(p, sender)) {
-                    if (newClock.getClock().get(p) > roomClock.getClock().get(p)) {
+                    if (newClock.getClock().get(p) > getRoomClock().getClock().get(p)) {
                         return false;
                     }
                 }
@@ -78,24 +88,27 @@ public class Room {
     }
 
     public void addMessage(Message msg) {
-        roomMessages.add(msg);
-        roomClock.increment(msg.getSender()); // not sure about this but i guess it's the same as doing the merge since
+        synchronized (roomMessages) {
+            roomMessages.add(msg);
+        }
+        getRoomClock().increment(msg.getSender()); // not sure about this but i guess it's the same as doing the merge since
                                               // we must have received all the messages sent before
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        sdf.setTimeZone(TimeZone.getDefault());
-        Calendar calendar = Calendar.getInstance();
-        String formattedTime = sdf.format(calendar.getTime());
-        System.out.println(
-                "[" + formattedTime + "] [" + msg.getRoom() + "] [" + msg.getSender() + "]: " + msg.getContent());
+        System.out.println(msg.toString());
         checkMessages();
     }
 
     public synchronized List<Message> getRoomMessages() {
-        return roomMessages;
+        synchronized (roomMessages) {
+            return roomMessages;
+        }
     }
 
     public synchronized VectorClock getRoomClock() {
-        return roomClock;
+        return participantsClock.get(username);
+    }
+
+    public synchronized Map<String, VectorClock> getParticipantsClock() {
+        return participantsClock;
     }
 
     public synchronized List<Message> getBufferedMessages() {
@@ -122,10 +135,51 @@ public class Room {
     }
 
     public String getLastWriter() {
-        return roomMessages.get(roomMessages.size() - 1).getSender();
+        synchronized (roomMessages) {
+            return roomMessages.get(roomMessages.size() - 1).getSender();
+        }
     }
 
     public String getRoomName() {
         return roomName;
+    }
+
+    public void updateMinimumClock() {
+        // Iterate over each participant's clock
+
+        for (Map.Entry<String, Integer> entry : getParticipantsClock().get(username).getClock().entrySet()) {
+            String participant = entry.getKey();
+            int value = entry.getValue();
+
+            minimumClock.getClock().put(participant, value);
+        }
+
+        for (VectorClock vectorClock : getParticipantsClock().values()) {
+            Map<String, Integer> clockMap = vectorClock.getClock();
+
+            // Update minimumClock with the smallest value for each participant
+            for (Map.Entry<String, Integer> entry : clockMap.entrySet()) {
+                String participant = entry.getKey();
+                int value = entry.getValue();
+
+                if (!minimumClock.getClock().containsKey(participant) || value < minimumClock.getClock().get(participant)) {
+                    minimumClock.getClock().put(participant, value);
+                }
+            }
+        }
+
+        //System.out.println(username + ": " + minimumClock.getClock());
+    }
+
+    public void removeDeliveredMessagesToAll() {
+        synchronized(roomMessages) {
+            Iterator<Message> iterator = roomMessages.iterator();
+            while (iterator.hasNext()) {
+                Message m = iterator.next();
+                if (m.getVectorClock().isLessOrEqualThan(minimumClock)) {
+                    iterator.remove();
+                }
+            }
+        }
     }
 }

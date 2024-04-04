@@ -1,7 +1,10 @@
 package it.polimi.ds;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 public class Message implements Serializable {
 
@@ -49,5 +52,14 @@ public class Message implements Serializable {
 
     public VectorClock getVectorClock() {
         return vectorClock;
+    }
+
+    @Override
+    public String toString() {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        sdf.setTimeZone(TimeZone.getDefault());
+        Calendar calendar = Calendar.getInstance();
+        String formattedTime = sdf.format(calendar.getTime());
+        return "[" + formattedTime + "] [" + room + "] [" + sender + "]: " + content;
     }
 }

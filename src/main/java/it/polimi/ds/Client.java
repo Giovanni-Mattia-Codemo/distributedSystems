@@ -92,7 +92,7 @@ public class Client {
 
     public void createRoom(String roomName, List<String> participants) {
         synchronized (rooms) {
-            rooms.put(roomName, new Room(roomName, participants));
+            rooms.put(roomName, new Room(roomName, username, participants));
         }
         Message msg = new Message("Room", this.username, roomName, participants, null, roomName);
         sendMessage(msg);
@@ -114,7 +114,9 @@ public class Client {
             msg = new Message(type, this.username, content, participants, vectorClock, room);
 
             if (type.equals("Message")) {
-                rooms.get(room).getRoomMessages().add(msg);
+                synchronized(rooms.get(room).getRoomMessages()) {
+                    rooms.get(room).getRoomMessages().add(msg);
+                }
             }
         }
 
@@ -158,7 +160,7 @@ public class Client {
                                 case "Room":
                                     if (!rooms.containsKey(msg.getContent())) {
                                         upToDateChecker.stop();
-                                        rooms.put(msg.getContent(), new Room(msg.getContent(), msg.getParticipants()));
+                                        rooms.put(msg.getContent(), new Room(msg.getContent(), username, msg.getParticipants()));
                                         System.out.println("[!] You have been added to room '" + msg.getContent() + "'");
                                         upToDateChecker = new UpToDateChecker(this);
                                         upToDateChecker.startCheckingTimer();
@@ -189,37 +191,40 @@ public class Client {
                                     VectorClock receivedVectorClock = msg.getVectorClock();
                                     boolean resend = false;
 
+                                    room.getParticipantsClock().put(msg.getSender(), msg.getVectorClock());
+
                                     // System.out.println("[" + username + "] RICEVUTA RESEND DA " + msg.getSender()
                                     // + " PER ROOM " + msg.getRoom()); //
                                     // System.out.println(" RECEIVED CLOCK: " +
                                     // msg.getVectorClock().getClock().toString()); //
 
-                                    for (Message m : room.getRoomMessages()) {
-                                        // System.out.println(" " + m.getContent() + ": " +
-                                        // m.getVectorClock().getClock().toString()); //
-                                        if (!resend) {
-                                            VectorClock clientVectorClock = m.getVectorClock();
-                                            for (Map.Entry<String, Integer> entry : clientVectorClock.getClock()
-                                                    .entrySet()) {
-                                                String participant = entry.getKey();
-                                                int clientClockValue = entry.getValue();
-                                                int receivedClockValue = receivedVectorClock.getClock()
-                                                        .get(participant);
-                                                // System.out.println(" "+ participant + " ClientVal: " +
-                                                // clientClockValue + "ReceivedVal +receivedClockValue);
+                                    synchronized(room.getRoomMessages()) {
+                                        for (Message m : room.getRoomMessages()) {
+                                            // System.out.println(" " + m.getContent() + ": " +
+                                            // m.getVectorClock().getClock().toString()); //
+                                            if (!resend) {
+                                                VectorClock clientVectorClock = m.getVectorClock();
+                                                for (Map.Entry<String, Integer> entry : clientVectorClock.getClock()
+                                                        .entrySet()) {
+                                                    String participant = entry.getKey();
+                                                    int clientClockValue = entry.getValue();
+                                                    int receivedClockValue = receivedVectorClock.getClock()
+                                                            .get(participant);
+                                                    // System.out.println(" "+ participant + " ClientVal: " +
+                                                    // clientClockValue + "ReceivedVal +receivedClockValue);
 
-                                                if (!participant.equals(msg.getSender())
-                                                        && clientClockValue == receivedClockValue + 1) {
-                                                    resend = true;
+                                                    if (!participant.equals(msg.getSender())
+                                                            && clientClockValue == receivedClockValue + 1) {
+                                                        resend = true;
+                                                    }
                                                 }
                                             }
-                                        }
 
-                                        if (resend) {
-                                            sendMessage(m);
+                                            if (resend) {
+                                                sendMessage(m);
+                                            }
                                         }
                                     }
-
                                     break;
                                 default:
                                     break;
@@ -308,13 +313,11 @@ public class Client {
         return group;
     }
 
-    public void setGroup(InetAddress group) {
-        this.group = group;
-
+    public void setGroup() {
         try {
             clientSocket = new MulticastSocket(port);
             clientSocket.joinGroup(new InetSocketAddress(group, port),
-                    NetworkInterface.getByInetAddress(InetAddress.getLocalHost())); // change this to allow multicast
+                    findActiveWifiInterface()); 
         } catch (IOException e) {
             e.printStackTrace();
         }

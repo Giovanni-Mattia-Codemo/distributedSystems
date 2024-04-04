@@ -32,7 +32,7 @@ public class DisconnectionTest {
 
         System.out.println(client1.createMessage("sksksk", "Message", "ciao!").getVectorClock().toString());
 
-        System.out.println(client3.createMessage("sksksk", "Message", "i limoni signora").getVectorClock().toString());
+        System.out.println(client2.createMessage("sksksk", "Message", "i limoni signora").getVectorClock().toString());
         System.out.println(client2.createMessage("sksksk", "Message", ":/").getVectorClock().toString());
 
         Thread.sleep(1000);
@@ -46,7 +46,7 @@ public class DisconnectionTest {
         Thread.sleep(1000);
         System.out.println(client3.createMessage("sksksk", "Message", "://///").getVectorClock().toString());
         Thread.sleep(1000);
-        resumeCommunication(client1, "224.0.2.0");
+        resumeCommunication(client1);
         System.out.println(client3.createMessage("sksksk", "Message", "Dopo le faccine").getVectorClock().toString());
         Thread.sleep(5000);
         System.out.println(client1.createMessage("sksksk", "Message", "FINE").getVectorClock().toString());
@@ -75,20 +75,15 @@ public class DisconnectionTest {
 
     public void stopCommunication(Client client) {
         try {
-            client.getSocket().leaveGroup(new InetSocketAddress(client.getGroup(), 5000), NetworkInterface.getByInetAddress(InetAddress.getLocalHost()));
+            client.getSocket().leaveGroup(new InetSocketAddress(client.getGroup(), 5000), Client.findActiveWifiInterface());
             client.getSocket().close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void resumeCommunication(Client client, String host) {
-        try {
-            client.setGroup(InetAddress.getByName(host));
-            clientReceiver(client, new Scanner(System.in));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void resumeCommunication(Client client) {
+        client.setGroup();
+        clientReceiver(client, new Scanner(System.in));
     }
 }
