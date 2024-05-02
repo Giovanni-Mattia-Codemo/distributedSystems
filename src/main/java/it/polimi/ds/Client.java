@@ -63,7 +63,6 @@ public class Client {
     public void deleteRoom(String room) {
         synchronized (rooms) {
             if (rooms.containsKey(room)) {
-                createMessage(room, "Deletion", room);
                 rooms.remove(room);
             } else
                 System.out.println("[!] You cannot delete a room you are not a participant of");
@@ -161,6 +160,7 @@ public class Client {
                 Object obj = inputStream.readObject();
 
                 if (obj instanceof Message msg) {
+                    
                     if (msg.getParticipants().contains(username) && !msg.getSender().equals(username)) {
                         synchronized (rooms) {
                             switch (msg.getType()) {
@@ -174,14 +174,16 @@ public class Client {
                                     }
                                     break;
                                 case "Message":
+                                    if(!rooms.containsKey(msg.getRoom())){
+                                        break;
+                                    }
                                     Room sendTo = rooms.get(msg.getRoom());
                                     sendTo.computeVectorClock(msg);
                                     break;
-                                case "Deletion":
-                                    rooms.remove(msg.getContent());
-                                    System.out.println("[!] Room '" + msg.getContent() + "' has been deleted");
-                                    break;
                                 case "Resend":
+                                    if(!rooms.containsKey(msg.getRoom())){
+                                        break;
+                                    }
                                     /*
                                      * It is performed a scan over the messages list of the specified room, in which
                                      * the messages are already sorted causally. Once we find the first occurrence
