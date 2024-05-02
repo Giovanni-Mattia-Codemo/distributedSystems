@@ -75,8 +75,8 @@ public class DisconnectionTest {
 
     public void stopCommunication(Client client) {
         try {
-            client.getSocket().leaveGroup(new InetSocketAddress(client.getGroup(), 5000), Client.findActiveWifiInterface());
-            client.getSocket().close();
+            client.getClientSocket().leaveGroup(new InetSocketAddress(client.getGroup(), 5000), Client.findActiveWifiInterface());
+            client.getClientSocket().close();
         } catch (IOException e) {
             e.printStackTrace();
         }

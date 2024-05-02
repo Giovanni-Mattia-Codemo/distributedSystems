@@ -12,6 +12,7 @@ public class Client {
     private final String username;
     private final HashMap<String, Room> rooms;
     private InetAddress group;
+    private NetworkInterface iface;
 
     private UpToDateChecker upToDateChecker;
 
@@ -74,13 +75,13 @@ public class Client {
     
         try {
             clientSocket = new MulticastSocket(port);
-            NetworkInterface iface = findActiveWifiInterface();
+            this.iface = findActiveWifiInterface();
             /*
              * per usare i test in locale
              * NetworkInterface iface =
              * NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
              */
-            clientSocket.joinGroup(new InetSocketAddress(group, port), iface);
+            clientSocket.joinGroup(new InetSocketAddress(group, port), this.iface);
   
         upToDateChecker.startCheckingTimer();
         }catch(IOException e){
@@ -88,19 +89,25 @@ public class Client {
         }
     }
 
-    
-
     public void createRoom(String roomName, List<String> participants) {
+        if(rooms.containsKey(roomName)){
+            System.out.println("[!] Room '" + roomName + "' already exists");
+            return;
+        }
         synchronized (rooms) {
             rooms.put(roomName, new Room(roomName, username, participants));
         }
         Message msg = new Message("Room", this.username, roomName, participants, null, roomName);
         sendMessage(msg);
         System.out.println("[!] Room '" + roomName + "' has been created");
-
     }
 
     public synchronized Message createMessage(String room, String type, String content) {
+        if (rooms.get(room) == null) {
+            System.out.println("[!] Room '" + room + "' does not exist");
+            return null;    
+        }
+       
         Message msg;
 
         synchronized (rooms) {
@@ -256,8 +263,7 @@ public class Client {
 
     public void disconnect() {
         try {
-            clientSocket.leaveGroup(new InetSocketAddress(group, port),
-                    NetworkInterface.getByInetAddress(InetAddress.getLocalHost())); // change this to allow multicast
+            clientSocket.leaveGroup(new InetSocketAddress(group, port), iface);
             clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -303,10 +309,6 @@ public class Client {
 
     public synchronized Map<String, Room> getRooms() {
         return rooms;
-    }
-
-    public MulticastSocket getSocket() {
-        return clientSocket;
     }
 
     public InetAddress getGroup() {

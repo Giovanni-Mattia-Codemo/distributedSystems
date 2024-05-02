@@ -1,6 +1,4 @@
 package it.polimi.ds;
-
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Room {
@@ -75,10 +73,8 @@ public class Room {
             }
         }
         return true;
-
     }
 
-    // there's an issue if messages are eliminated
     public void checkMessages() {
         for (Message msg : bufferedMessages) {
             if (computeVectorClock(msg))
