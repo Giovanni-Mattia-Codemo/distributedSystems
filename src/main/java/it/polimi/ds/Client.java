@@ -75,11 +75,6 @@ public class Client {
         try {
             clientSocket = new MulticastSocket(port);
             this.iface = findActiveWifiInterface();
-            /*
-             * per usare i test in locale
-             * NetworkInterface iface =
-             * NetworkInterface.getByInetAddress(InetAddress.getLocalHost());
-             */
             clientSocket.joinGroup(new InetSocketAddress(group, port), this.iface);
   
         upToDateChecker.startCheckingTimer();
@@ -153,7 +148,6 @@ public class Client {
             while (!clientSocket.isClosed()) {
                 byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                // block waiting for new message
                 clientSocket.receive(packet);
                 ByteArrayInputStream byteStream = new ByteArrayInputStream(packet.getData());
                 ObjectInputStream inputStream = new ObjectInputStream(byteStream);
@@ -202,15 +196,8 @@ public class Client {
 
                                     room.getParticipantsClock().put(msg.getSender(), msg.getVectorClock());
 
-                                    // System.out.println("[" + username + "] RICEVUTA RESEND DA " + msg.getSender()
-                                    // + " PER ROOM " + msg.getRoom()); //
-                                    // System.out.println(" RECEIVED CLOCK: " +
-                                    // msg.getVectorClock().getClock().toString()); //
-
                                     synchronized(room.getRoomMessages()) {
                                         for (Message m : room.getRoomMessages()) {
-                                            // System.out.println(" " + m.getContent() + ": " +
-                                            // m.getVectorClock().getClock().toString()); //
                                             if (!resend) {
                                                 VectorClock clientVectorClock = m.getVectorClock();
                                                 for (Map.Entry<String, Integer> entry : clientVectorClock.getClock()
@@ -219,8 +206,6 @@ public class Client {
                                                     int clientClockValue = entry.getValue();
                                                     int receivedClockValue = receivedVectorClock.getClock()
                                                             .get(participant);
-                                                    // System.out.println(" "+ participant + " ClientVal: " +
-                                                    // clientClockValue + "ReceivedVal +receivedClockValue);
 
                                                     if (!participant.equals(msg.getSender())
                                                             && clientClockValue == receivedClockValue + 1) {

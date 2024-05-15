@@ -22,24 +22,11 @@ public class UpToDateChecker {
 
                         room.updateMinimumClock();
                         room.removeDeliveredMessagesToAll();
-                        //System.out.println("MESSAGGI DI " + client.getUsername() + ": " + room.getRoomMessages()); 
                     }
                 }
             }
         }, 0, RESEND_INTERVAL_MS);
     }
-
-    /*
-     * 
-     * public String getRandomParticipant(Room room, String excludeParticipant) {
-     * List<String> participants = new ArrayList<>(room.getParticipants());
-     * participants.removeIf(p -> p.equals(excludeParticipant));
-     * 
-     * return participants.isEmpty() ? null :
-     * participants.get(random.nextInt(participants.size()));
-     * }
-     * 
-     */
 
     public void stop() {
         try {

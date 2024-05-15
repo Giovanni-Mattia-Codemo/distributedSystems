@@ -87,8 +87,8 @@ public class Room {
         synchronized (roomMessages) {
             roomMessages.add(msg);
         }
-        getRoomClock().increment(msg.getSender()); // not sure about this but i guess it's the same as doing the merge since
-                                              // we must have received all the messages sent before
+        getRoomClock().increment(msg.getSender()); 
+                                          
         System.out.println(msg.toString());
         checkMessages();
     }
@@ -164,7 +164,6 @@ public class Room {
             }
         }
 
-        //System.out.println(username + ": " + minimumClock.getClock());
     }
 
     public void removeDeliveredMessagesToAll() {
