@@ -2,6 +2,7 @@
 
 ## Overview
 This project implements a distributed group chat application where users can create and delete rooms, post messages within rooms they are participating in, and receive messages in causal order. The application is designed to be fully distributed, meaning it operates without a centralized server, and highly available, ensuring users can use the chat even when temporarily disconnected from the network or during network failures.
+For the sake of simplicity, since this wasn't the aim of the project, we opted for a multicast connection between clients.
 
 ## Features
 1. **Room Creation and Deletion:** Users can create rooms and specify the set of participants at the time of creation. Rooms can also be deleted by users.
